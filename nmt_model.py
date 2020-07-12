@@ -47,7 +47,7 @@ class NMT(nn.Module):
         self.dropout = None
 
         self.encoder = nn.LSTM(embed_size, hidden_size, num_layers=1, bias=True, bidirectional=True)
-        self.decoder = nn.LSTMCell(embed_size, hidden_size, bias=True)
+        self.decoder = nn.LSTMCell(embed_size+hidden_size, hidden_size, bias=True)
         self.h_projection = nn.Linear(2*hidden_size, hidden_size, bias=False)
         self.c_projection = nn.Linear(2*hidden_size, hidden_size, bias=False)
         self.att_projection = nn.Linear(2*hidden_size, hidden_size, bias=False)
@@ -308,7 +308,10 @@ class NMT(nn.Module):
 
         dec_state = self.decoder(Ybar_t, dec_state)
         dec_hidden, dec_cell = dec_state
-        e_t = torch.bmm(dec_hidden, enc_hiddens_proj)
+        # shape(dec_hidden) = (b, h)    shape(enc_hiddens_proj) = (b, src_len, h)
+        # first, unsqueeze and convert to shape (b, h, 1)
+        e_t = torch.bmm(enc_hiddens_proj, torch.unsqueeze(dec_hidden, dim=2)) # shape(e_t) = (b, src_len, 1)
+        e_t = torch.squeeze(e_t, dim=2) # shape(e_t) = (b, src_len)
 
         ### Use the following docs to implement this functionality:
         ###     Batch Multiplication:
@@ -339,6 +342,15 @@ class NMT(nn.Module):
         ###     4. Apply the combined output projection layer to U_t to compute tensor V_t
         ###     5. Compute tensor O_t by first applying the Tanh function and then the dropout layer.
         ###
+
+        alpha_t = F.softmax(e_t, dim=1) # shape(alpha_t) = (b, src_len)
+        alpha_t = torch.unsqueeze(alpha_t, dim=1) # converting to shape (b, 1, src_len)
+        a_t = torch.bmm(alpha_t, enc_hiddens) # a_t shape (b, 1, 2h)
+        a_t = torch.squeeze(a_t, dim=1) # a_t shape (b, 2h)
+        U_t = torch.cat((a_t, dec_hidden), dim=1) # shape(U_t) = (b, 3h)
+        V_t = self.combined_output_projection(U_t)
+        O_t = self.dropout(torch.tanh(V_t))
+
         ### Use the following docs to implement this functionality:
         ###     Softmax:
         ###         https://pytorch.org/docs/stable/nn.html#torch.nn.functional.softmax
@@ -350,8 +362,6 @@ class NMT(nn.Module):
         ###         https://pytorch.org/docs/stable/torch.html#torch.cat
         ###     Tanh:
         ###         https://pytorch.org/docs/stable/torch.html#torch.tanh
-
-        ### END YOUR CODE
 
         combined_output = O_t
         return dec_state, combined_output, e_t
