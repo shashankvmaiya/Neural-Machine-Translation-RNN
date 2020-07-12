@@ -230,8 +230,8 @@ class NMT(nn.Module):
         ###             - Update o_prev to the new o_t.
 
         for Y_t in torch.split(Y, 1):
-            Y_t = torch.squeeze(Y_t, dim=0) # Removing dimensions of size 1 from dim=0            
-            Ybar_t = torch.cat((Y_t, o_prev), dim=0)
+            Y_t = torch.squeeze(Y_t, dim=0) # Removing dimensions of size 1 from dim=0
+            Ybar_t = torch.cat((Y_t, o_prev), dim=1)
             dec_state, o_t, e_t = self.step(Ybar_t, dec_state, enc_hiddens, enc_hiddens_proj, enc_masks)
             combined_outputs.append(o_t)
             o_prev = o_t
@@ -305,7 +305,6 @@ class NMT(nn.Module):
         ###         - When using the squeeze() function make sure to specify the dimension you want to squeeze
         ###             over. Otherwise, you will remove the batch dimension accidentally, if batch_size = 1.
         ###
-
         dec_state = self.decoder(Ybar_t, dec_state)
         dec_hidden, dec_cell = dec_state
         # shape(dec_hidden) = (b, h)    shape(enc_hiddens_proj) = (b, src_len, h)
