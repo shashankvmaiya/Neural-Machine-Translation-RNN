@@ -14,9 +14,6 @@ NMT system highlights
 
 To train/run the code
 
-- sh run.sh vocab 
-	Generates the necessary vocab file
-- sh run.sh train
-	Runs the trainer and generates the NMT model 
-- sh run.sh test
-	Runs 
+- ```sh run.sh vocab```: Generates the necessary vocab file
+- ```sh run.sh train```: Runs the trainer and generates the NMT model 
+- ```sh run.sh test```: Runs predictions using the trained model for test data 
