@@ -4,6 +4,7 @@ Here, we implement a sequence-to-sequence (Seq2Seq) network with Multiplicative 
 <img src="./Images/seq2seq_nmt_model.png"/>
 
 NMT system highlights
+
 	- Encoder: Bidirectional LSTM Encoder to encode the source language (2h hidden states and 2h cell states)
 	- Decoder: Unidirectional LSTM Decoder to decode the target language (h hidden states and h cell states)
 	- Multiplicative attention is used (since the number of states in the encoder and decoder are not equal)
